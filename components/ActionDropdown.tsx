@@ -15,10 +15,10 @@ import { Models } from "node-appwrite";
 import { actionsDropdownItems } from "@/constants";
 import Link from "next/link";
 import { constructDownloadUrl } from "@/lib/utils";
-import { DialogContent, DialogDescription, DialogTitle } from "@radix-ui/react-dialog";
+import { DialogContent, DialogTitle } from "@radix-ui/react-dialog";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { renameFile } from "@/lib/actions/file.actions";
+import { deleteFile, renameFile, updateFileUsers } from "@/lib/actions/file.actions";
 import { usePathname } from "next/navigation";
 import { FileDetails, ShareInput } from "./ActionsModalContent";
   
@@ -49,8 +49,8 @@ const ActionsDropdown = ({file} : {file : Models.Document}) => {
 
         const actions = {
             rename: () => renameFile({fileId: file.$id, name, extension: file.extension, path}),
-            share: () => console.log("share"),
-            delete: () => console.log("delete"),
+            share: () => updateFileUsers({fileId: file.$id, emails, path}),
+            delete: () => deleteFile({fileId: file.$id, path, bucketFileId: file.bucketFileId}),
         };
 
         success = await actions[action.value as keyof typeof actions]();
@@ -60,7 +60,18 @@ const ActionsDropdown = ({file} : {file : Models.Document}) => {
         setIsLoading(false);
     };
 
-    const handleRemoveUser = () => {};
+    const handleRemoveUser = async ( email: string) => {
+        const updatedEmails = emails.filter((e) => e !== email);
+
+        const success = await updateFileUsers({
+            fileId: file.$id,
+            emails: updatedEmails,
+            path,
+        });
+
+        if(success) setEmails(updatedEmails);
+        closeAllModals();
+    };
 
     const renderDialogContent = () => {
 
@@ -77,6 +88,12 @@ const ActionsDropdown = ({file} : {file : Models.Document}) => {
                 {value === 'details' && <FileDetails file={file} />}
                 {value === 'share' && (
                     <ShareInput file={file} onInputChange={setEmails} onRemove={handleRemoveUser} />
+                )}
+                {value === 'delete' && (
+                    <p className="delete-confirmation">
+                        Are you sure you want to delete{` `}
+                        <span className="delete-file-name">{file.name}</span>?
+                    </p>
                 )}
                 </DialogHeader>
 
@@ -113,7 +130,7 @@ const ActionsDropdown = ({file} : {file : Models.Document}) => {
                                 setIsModalOpen(true);
                             }
                         }}>
-                            {actionItem.value === 'download'} ? <Link href={constructDownloadUrl(file.bucketFieldId)} download={file.name} className="flex items-center gap-2" >
+                            {actionItem.value === 'download' ? <Link href={constructDownloadUrl(file.bucketFieldId)} download={file.name} className="flex items-center gap-2" >
                             <Image src={actionItem.icon} alt={actionItem.label} width={30} height={30} />
                             {actionItem.label}
                             </Link> :
@@ -121,7 +138,7 @@ const ActionsDropdown = ({file} : {file : Models.Document}) => {
                             <Image src={actionItem.icon} alt={actionItem.label} width={30} height={30} />
                             {actionItem.label}
                             </div>
-                            
+                            }
                         </DropdownMenuItem>
                     ))}
                 </DropdownMenuContent>

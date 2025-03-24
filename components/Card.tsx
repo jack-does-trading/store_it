@@ -9,7 +9,7 @@ const Card = ( {file} : {file: Models.Document}) => {
     return ( 
         <Link href={file.url} target="_blank" className="file-card">
             <div className="flex justify-between">
-                <Thumbnail type={file.type} extention={file.extention} url={file.url} className="!size-20" imageClassName="!size-11" />
+                <Thumbnail type={file.type} extension={file.extention} url={file.url} className="!size-20" imageClassName="!size-11" />
 
                 <div className="flex flex-col items-end justify-between">
                     <ActionsDropdown file={file} />
