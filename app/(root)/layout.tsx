@@ -4,7 +4,9 @@ import Header from "@/components/Header";
 import React from "react";
 import { getCurrentUser } from "@/lib/actions/user.actions";
 import { redirect } from "next/navigation";
-import { Toaster } from 'sonner'
+import { Toaster } from 'sonner';
+
+export const dynamic = "force-dynamic";
 
 const Layout = async ({children}: {children: React.ReactNode}) => {
 
