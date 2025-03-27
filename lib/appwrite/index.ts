@@ -28,25 +28,33 @@ export const createSessionClient = async () => {
 };
 
 export const createAdminClient = async () => {
-  const client = new Client()
-    .setEndpoint(appwriteConfig.endpointUrl)
-    .setProject(appwriteConfig.projectId)
-    .setKey(appwriteConfig.secretKey);
+  try {
+    // Validate required config
+    if (!appwriteConfig.endpointUrl) throw new Error('Missing Appwrite endpoint URL');
+    if (!appwriteConfig.projectId) throw new Error('Missing Appwrite project ID');
+    if (!appwriteConfig.secretKey) throw new Error('Missing Appwrite secret key');
 
-    console.log("createAdminClient");
+    const client = new Client()
+      .setEndpoint(appwriteConfig.endpointUrl)
+      .setProject(appwriteConfig.projectId)
+      .setKey(appwriteConfig.secretKey);
 
-  return {
-    get account() {
-      return new Account(client);
-    },
-    get databases() {
-      return new Databases(client);
-    },
-    get storage() {
-      return new Storage(client);
-    },
-    get avatars() {
-      return new Avatars(client);
-    },
-  };
+    return {
+      get account() {
+        return new Account(client);
+      },
+      get databases() {
+        return new Databases(client);
+      },
+      get storage() {
+        return new Storage(client);
+      },
+      get avatars() {
+        return new Avatars(client);
+      },
+    };
+  } catch (error) {
+    console.error('Failed to create Appwrite admin client:', error);
+    throw error;
+  }
 };

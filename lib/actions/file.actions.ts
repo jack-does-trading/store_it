@@ -22,13 +22,31 @@ export const uploadFile = async ({
   const { storage, databases } = await createAdminClient();
 
   try {
-    const inputFile = InputFile.fromBuffer(file, file.name);
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
 
-    const bucketFile = await storage.createFile(
-      appwriteConfig.bucketId,
-      ID.unique(),
-      inputFile,
-    );
+    let buffer;
+    if (file instanceof Buffer) {
+      buffer = file;
+    } else {
+      buffer = Buffer.from(await file.arrayBuffer());
+    }
+
+    const inputFile = InputFile.fromBuffer(buffer, file.name);
+
+    const bucketFile = await Promise.race([
+      storage.createFile(
+        appwriteConfig.bucketId,
+        ID.unique(),
+        inputFile,
+      ),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Upload timeout')), 30000)
+      )
+    ]) as Models.File;
 
     const fileDocument = {
       type: getFileType(bucketFile.name).type,
@@ -57,6 +75,12 @@ export const uploadFile = async ({
     revalidatePath(path);
     return parseStringify(newFile);
   } catch (error) {
+    console.error('Upload error details:', {
+      error,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type
+    });
     handleError(error, "Failed to upload file");
   }
 };
@@ -234,3 +258,4 @@ export async function getTotalSpaceUsed() {
     handleError(error, "Error calculating total space used:, ");
   }
 }
+
